@@ -1,6 +1,6 @@
 local opt = vim.opt
 local api = vim.api
-
+vim.opt.laststatus = 3
 -- ================== NUMBERS ==================
 
 opt.rnu = true

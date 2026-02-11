@@ -7,6 +7,25 @@ return {
 		{ "akinsho/bufferline.nvim", version = "*", dependencies = "nvim-tree/nvim-web-devicons" },
 	},
 	config = function()
+		local heirline = require("heirline")
+		local conditions = require("heirline.conditions")
+		local utils = require("heirline.utils") -- <--- This is what was "nil"
+
+		local MacroRecorder = {
+			condition = function()
+				return vim.fn.reg_recording() ~= ""
+			end,
+			provider = function()
+				return " 󰑋  Recording @" .. vim.fn.reg_recording() .. " "
+			end,
+			hl = { fg = "orange", bold = true },
+			utils.surround({ "", "" }, "bright_bg", {
+				hl = { fg = "orange", bg = "bright_bg" },
+			}),
+			-- We need to force an update when recording starts/stops
+			update = { "RecordingEnter", "RecordingLeave" },
+		}
+
 		-- bufferline
 		local bufferline = require("bufferline")
 		bufferline.setup({
@@ -408,6 +427,7 @@ return {
 			hl = { bg = "normal_bg" },
 
 			ViMode,
+			MacroRecorder,
 			Spacer,
 			Git,
 
