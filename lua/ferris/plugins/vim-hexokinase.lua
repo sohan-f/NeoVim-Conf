@@ -1,0 +1,23 @@
+return {
+	"rrethy/vim-hexokinase",
+	build = "make hexokinase",
+	event = { "BufReadPost", "BufNewFile" },
+	init = function()
+		vim.g.Hexokinase_highlighters = { "virtual" }
+		vim.g.Hexokinase_virtualText = "■"
+		vim.g.Hexokinase_optInPatterns = {
+			"full_hex",
+			"rgb",
+			"rgba",
+			"hsl",
+			"hsla",
+		}
+	end,
+	config = function()
+		vim.api.nvim_create_autocmd("TermOpen", {
+			callback = function()
+				vim.b.vim_hexokinase_disable = 1
+			end,
+		})
+	end,
+}
