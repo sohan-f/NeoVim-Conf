@@ -22,11 +22,16 @@ A clean and efficient Neovim configuration managed with `lazy.nvim` tailored for
 ```bash
 apt update && yes | apt upgrade && apt update && yes | apt install build-essential zip termux-api gdu gdb gdbserver gh fd fzf neovim lua-language-server jq-lsp luarocks stylua ripgrep lazygit yarn python python-pip ccls clang zig rust-analyzer git ruby  && pip install neovim && npm install -g neovim && gem install neovim
 ```
-2. Clone this repository:
+2. Make backup of your current config:
+```bash
+mv ~/.config/nvim ~/.config/nvim.bak
+mv ~/.local/share/nvim ~/.local/share/nvim.bak
+```
+3. Clone this repository:
 ```bash
 git clone https://github.com/sohan-f/nvim-config.git ~/.config/nvim
 ```
-3. Launch Neovim
+4. Launch Neovim
 ```bash
 nvim
 ```
