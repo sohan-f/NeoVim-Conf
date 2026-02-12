@@ -34,7 +34,7 @@ return {
 				},
 			})
 
-			-- 3. Global Mappings & Autocmds
+			-- Global Mappings & Autocmds
 			vim.api.nvim_create_autocmd("LspAttach", {
 				callback = function(args)
 					local bufnr = args.buf

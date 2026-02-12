@@ -1,16 +1,18 @@
 return {
 	"folke/flash.nvim",
-	event = "VeryLazy", -- CursorHold works, but VeryLazy is the standard for UI tools
-	opts = {},
+	event = "VeryLazy",
+	opts = {
+		jump = {
+			autojump = true,
+		},
+	},
 	keys = {
 		{
 			"s",
 			mode = { "n", "x", "o" },
 			function()
 				require("flash").jump({
-					action = function(match, state)
-						state:hide()
-						match:jump()
+					on_jump = function()
 						vim.cmd("normal! zz")
 					end,
 				})

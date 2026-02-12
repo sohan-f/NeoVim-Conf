@@ -8,6 +8,17 @@ return {
 	},
 	config = function()
 		-- BUFFERLINE SETUP
+		vim.diagnostic.config({
+			signs = {
+				text = {
+					[vim.diagnostic.severity.ERROR] = " ",
+					[vim.diagnostic.severity.WARN] = " ",
+					[vim.diagnostic.severity.INFO] = " ",
+					[vim.diagnostic.severity.HINT] = " ",
+				},
+			},
+		})
+
 		local bufferline = require("bufferline")
 		bufferline.setup({
 			options = {
@@ -237,23 +248,29 @@ return {
 				provider = "",
 				hl = function(self)
 					local mode_char = self.mode:sub(1, 1)
-					local bg_color = (vim.fn.mode() == "n" and kb_state.keys ~= "") and "bright_bg" or "normal_bg"
+					local is_keypress = (vim.fn.mode() == "n" and #kb_state.keys > 0)
+					local is_macro = (vim.fn.reg_recording() ~= "")
+
+					local bg_color = (is_keypress or is_macro) and "bright_bg" or "normal_bg"
+
 					return { fg = self.mode_colors[mode_char] or "purple", bg = bg_color }
 				end,
 			},
 		}
 
 		-- Macro Recorder
+
 		local MacroRecorder = {
 			condition = function()
 				return vim.fn.reg_recording() ~= ""
 			end,
+			update = { "RecordingEnter", "RecordingLeave" },
+
 			provider = function()
 				return " 󰑋 @" .. vim.fn.reg_recording() .. " "
 			end,
-			hl = { fg = "orange", bold = true },
-			utils.surround({ "", "" }, "bright_bg", { hl = { fg = "orange", bg = "bright_bg" } }),
-			update = { "RecordingEnter", "RecordingLeave" },
+
+			hl = { fg = "orange", bg = "bright_bg", bold = true },
 		}
 
 		-- Git Status
@@ -526,19 +543,45 @@ return {
 			},
 		}
 
+		local VisualFeedbackBlock = {
+			{
+				condition = function()
+					return (vim.fn.mode() == "n" and #kb_state.keys > 0) or (vim.fn.reg_recording() ~= "")
+				end,
+
+				{
+					condition = function()
+						return #kb_state.keys > 0
+					end,
+					KeypressFeedback,
+					{
+						condition = function()
+							return vim.fn.reg_recording() ~= ""
+						end,
+						provider = "│",
+						hl = { fg = "gray", bg = "bright_bg" },
+					},
+				},
+
+				{
+					condition = function()
+						return vim.fn.reg_recording() ~= ""
+					end,
+					MacroRecorder,
+				},
+
+				{
+					provider = "",
+					hl = { fg = "bright_bg", bg = "normal_bg" },
+				},
+			},
+		}
+
 		-- BUILD STATUSLINE
 		local StatusLine = {
 			hl = { bg = "normal_bg" },
 			ViMode,
-			-- Keystroke block gracefully fades bg out to empty space using half circles
-			{
-				condition = function()
-					return vim.fn.mode() == "n" and kb_state.keys ~= ""
-				end,
-				KeypressFeedback,
-				{ provider = "", hl = { fg = "bright_bg", bg = "normal_bg" } },
-			},
-			MacroRecorder,
+			VisualFeedbackBlock,
 			Space,
 			Git,
 			Align,

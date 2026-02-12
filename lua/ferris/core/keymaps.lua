@@ -29,8 +29,7 @@ map("v", "J", ":m '>+1<CR>gv=gv")
 map("v", "K", ":m '<-2<CR>gv=gv")
 map("v", "<", "<gv", opts)
 map("v", ">", ">gv", opts)
-map("v", "p", '"_dp', opts)
-map("x", "<leader>p", [["_dP]])
+map("x", "p", [["_dP]], opts)
 
 -- ================== SEARCH ==================
 
@@ -62,7 +61,11 @@ local function run(cmd, key)
 			vim.cmd("sb " .. terminals[key])
 		end
 	else
-		vim.cmd("terminal " .. cmd)
+		if cmd and cmd ~= "" then
+			vim.cmd("terminal " .. cmd)
+		else
+			vim.cmd("terminal")
+		end
 		terminals[key] = vim.api.nvim_get_current_buf()
 	end
 	vim.cmd("startinsert")
@@ -77,13 +80,17 @@ local function input_run(prompt, base, key, default)
 	end)
 end
 
+vim.keymap.set("n", "<leader>tb", function()
+	run("", "interactive")
+end, { desc = "Open interactive terminal buffer" })
+
 map("n", "<leader>tr", function()
 	run("cargo run", "cargo_run")
 end)
-map("n", "<leader>tb", function()
+map("n", "<leader>cb", function()
 	run("cargo build", "cargo_build")
 end)
-map("n", "<leader>tt", function()
+map("n", "<leader>ct", function()
 	input_run("Cargo test args: ", "RUSTFLAGS='-A warnings' cargo test", "cargo_test", "-- --exact --nocapture --quiet")
 end)
 
