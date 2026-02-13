@@ -1,36 +1,52 @@
 return {
-	{
-		"mrcjkb/rustaceanvim",
-		version = "^6",
-		ft = "rust",
-		config = function()
-			local termux_prefix = "/data/data/com.termux/files/usr/bin/"
+    {
+        "mrcjkb/rustaceanvim",
+        version = "^7",
+        dependencies = {
+            "mfussenegger/nvim-dap",
+        },
+        config = function()
+            local codelldb = vim.fn.exepath("codelldb")
+            local liblldb = nil
 
-			vim.g.rustaceanvim = {
-				server = {
-					settings = {
-						["rust-analyzer"] = {
-							cargo = {
-								extraEnv = { CARGO_PROFILE_RUST_ANALYZER_INHERITS = "dev" },
-								extraArgs = { "--profile", "rust-analyzer" },
-							},
-							check = {
-								command = "clippy",
-								extraArgs = { "--no-deps" },
-							},
-							files = {
-								excludeDirs = { ".direnv", ".git", "target" },
-							},
-						},
-					},
-				},
-				dap = {
-					adapter = require("rustaceanvim.config").get_codelldb_adapter(
-						termux_prefix .. "codelldb",
-						"/data/data/com.termux/files/usr/lib/liblldb.so"
-					),
-				},
-			}
-		end,
-	},
+            -- Termux detection
+            if vim.uv.os_uname().sysname == "Linux" and vim.fn.has("android") == 1 then
+                liblldb = "/data/data/com.termux/files/usr/lib/liblldb.so"
+            end
+
+            vim.g.rustaceanvim = {
+                server = {
+                    settings = {
+                        ["rust-analyzer"] = {
+                            check = {
+                                command = "clippy",
+                            },
+                            imports = {
+                                granularity = {
+                                    group = "module",
+                                },
+                                prefix = "self",
+                            },
+                            cargo = {
+                                buildScripts = {
+                                    enable = true,
+                                },
+                            },
+                            procMacro = {
+                                enable = true,
+                            },
+                        },
+                    },
+                },
+
+                dap = {
+                    adapter = require("rustaceanvim.config")
+                        .get_codelldb_adapter(
+                            codelldb ~= "" and codelldb or "codelldb",
+                            liblldb
+                        ),
+                },
+            }
+        end,
+    },
 }

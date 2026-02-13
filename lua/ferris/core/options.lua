@@ -1,18 +1,24 @@
+-- Core
+vim.loader.enable()
+
 local opt = vim.opt
 local api = vim.api
-vim.opt.laststatus = 3
--- ================== NUMBERS ==================
+local o = vim.o
 
-opt.rnu = true
+o.laststatus = 3
+
+-- Numbers
+opt.number = true
+opt.relativenumber = true
 
 api.nvim_create_autocmd({ "InsertEnter", "InsertLeave" }, {
-	callback = function(ev)
-		opt.rnu = ev.event == "InsertLeave"
-	end,
+    group = api.nvim_create_augroup("DynamicRelativeNumber", { clear = true }),
+    callback = function(ev)
+        opt.relativenumber = (ev.event == "InsertLeave")
+    end,
 })
 
--- ================== UI ==================
-
+-- UI
 opt.cmdheight = 0
 opt.showcmd = false
 opt.showmode = false
@@ -23,15 +29,19 @@ opt.fillchars = { eob = " " }
 opt.mousefocus = false
 opt.lazyredraw = true
 
--- dynamic scrolloff (20% of screen)
-api.nvim_create_autocmd("VimResized", {
-	callback = function()
-		opt.scrolloff = math.floor(vim.o.lines * 0.2)
-	end,
+-- Dynamic scrolloff
+local function update_scrolloff()
+    opt.scrolloff = math.floor(vim.o.lines * 0.2)
+end
+
+api.nvim_create_autocmd({ "VimResized", "UIEnter" }, {
+    group = api.nvim_create_augroup("DynamicScrolloff", { clear = true }),
+    callback = update_scrolloff,
 })
 
--- ================== INDENT ==================
+update_scrolloff()
 
+-- Indent
 opt.shiftwidth = 4
 opt.tabstop = 4
 opt.softtabstop = 4
@@ -40,94 +50,91 @@ opt.autoindent = true
 opt.cindent = false
 opt.smartindent = false
 
--- ================== SEARCH ==================
-
+-- Search
 opt.hlsearch = false
 opt.incsearch = true
 opt.inccommand = "nosplit"
 opt.ignorecase = true
 opt.smartcase = true
 
--- ================== FILE ==================
-
+-- File
 opt.swapfile = false
 opt.backup = false
 opt.undofile = true
 opt.updatetime = 80
 opt.backspace = { "start", "eol", "indent" }
 
--- ================== WRAP ==================
-
+-- Wrap
 opt.wrap = false
 opt.linebreak = false
 
--- ================== SHELL / CMD ==================
-
+-- Shell / Cmd
 opt.shell = "zsh"
 opt.wildmenu = true
 opt.wildmode = "full"
 
----@diagnostic disable-next-line: undefined-field
 opt.clipboard:append("unnamedplus")
 
-vim.loader.enable()
-
--- ================== HIGHLIGHT ==================
-
+-- Highlight
 local function set_hl()
-	api.nvim_set_hl(0, "LineNr", { fg = "#ff9e64" })
+    api.nvim_set_hl(0, "LineNr", { fg = "#ff9e64" })
 end
 
-set_hl()
-api.nvim_create_autocmd("ColorScheme", { callback = set_hl })
-
--- ================== DIAGNOSTICS ==================
-
-vim.diagnostic.config({
-	virtual_text = false,
-	underline = true,
-	update_in_insert = false,
-	severity_sort = true,
-	signs = true,
-
-	float = {
-		border = "rounded",
-		source = "always",
-		focusable = true, -- required for scrolling
-	},
+api.nvim_create_autocmd("ColorScheme", {
+    group = api.nvim_create_augroup("CustomHighlights", { clear = true }),
+    callback = set_hl,
 })
 
--- Diagnostic signs (unchanged logic, clearer structure)
+set_hl()
+
+-- Diagnostics
+vim.diagnostic.config({
+    virtual_text = false,
+    underline = true,
+    update_in_insert = false,
+    severity_sort = true,
+    signs = true,
+    float = {
+        border = "rounded",
+        source = "always",
+        focusable = true,
+    },
+})
+
 local signs = {
-	Error = " ",
-	Warn = " ",
-	Hint = "󰌵 ",
-	Info = " ",
+    Error = " ",
+    Warn  = " ",
+    Hint  = "󰌵 ",
+    Info  = " ",
 }
 
 for type, icon in pairs(signs) do
-	local hl = "DiagnosticSign" .. type
-	vim.fn.sign_define(hl, { text = icon, texthl = hl, numhl = "" })
+    local hl = "DiagnosticSign" .. type
+    vim.fn.sign_define(hl, {
+        text = icon,
+        texthl = hl,
+        numhl = "",
+    })
 end
 
--- Hover diagnostics on CursorHold (only when relevant)
-vim.api.nvim_create_autocmd("CursorHold", {
-	callback = function()
-		-- Do nothing if there are no diagnostics under cursor
-		if vim.tbl_isempty(vim.diagnostic.get(0, { lnum = vim.fn.line(".") - 1 })) then
-			return
-		end
+api.nvim_create_autocmd("CursorHold", {
+    group = api.nvim_create_augroup("DiagnosticHover", { clear = true }),
+    callback = function()
+        local lnum = vim.api.nvim_win_get_cursor(0)[1] - 1
+        if vim.tbl_isempty(vim.diagnostic.get(0, { lnum = lnum })) then
+            return
+        end
 
-		vim.diagnostic.open_float(nil, {
-			scope = "cursor", -- hover behavior
-			focus = true, -- allows scrolling
-			border = "rounded",
-			close_events = {
-				"CursorMoved",
-				"InsertEnter",
-				"BufLeave",
-				"FocusLost",
-			},
-		})
-	end,
+        vim.diagnostic.open_float(nil, {
+            scope = "cursor",
+            focus = true,
+            border = "rounded",
+            close_events = {
+                "CursorMoved",
+                "InsertEnter",
+                "BufLeave",
+                "FocusLost",
+            },
+        })
+    end,
 })
