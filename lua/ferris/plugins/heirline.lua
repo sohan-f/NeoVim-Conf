@@ -87,7 +87,7 @@ return {
 
         local kb_state = {
             keys = {},
-            max = 6,
+            max = 2,
         }
 
         local function push_key(key)
@@ -112,10 +112,6 @@ return {
             end,
         })
 
-        vim.keymap.set("n", "<expr>", function()
-            return ""
-        end)
-
         -- Use mapping wrapper for normal mode keys
         local ns = vim.api.nvim_create_namespace("heirline_keypress_clean")
 
@@ -139,7 +135,9 @@ return {
         end
 
         vim.on_key(function(key)
-            if vim.fn.mode() ~= "n" then
+            local mode = vim.fn.mode()
+
+            if mode ~= "n" then
                 return
             end
 
@@ -148,13 +146,15 @@ return {
                 return
             end
 
-            -- Ignore control chars
-            if k:byte() < 32 then
+            if k:sub(1, 1) == "<" then
                 return
             end
 
-            -- Ignore ALL mouse-related events
-            if k:match("Mouse") or k:match("Scroll") or k:match("Drag") or k:match("Release") then
+            if #k > 1 or k:byte() < 32 then
+                return
+            end
+
+            if k:find("Mouse") or k:find("Scroll") or k:find("Drag") or k:find("Release") then
                 return
             end
 
@@ -167,7 +167,7 @@ return {
                 return vim.fn.mode() == "n" and #kb_state.keys > 0
             end,
             provider = function()
-                return "  " .. table.concat(kb_state.keys, "") .. " "
+                return " " .. table.concat(kb_state.keys, "") .. " "
             end,
             hl = { fg = "cyan", bg = "bright_bg", bold = true },
         }
@@ -191,16 +191,16 @@ return {
             },
             static = {
                 mode_names = {
-                    n = "NOR",
-                    v = "VIS",
-                    V = "V-L",
-                    ["\22"] = "V-B",
-                    s = "SEL",
-                    S = "S-L",
-                    i = "INS",
-                    R = "REP",
-                    c = "CMD",
-                    t = "TRM",
+                    n = "󰈚 ", -- normal
+                    v = "󰈈 ", -- visual
+                    V = "󰈈 ", -- visual line
+                    ["\22"] = "󰈈 ", -- visual block
+                    s = "󰒅 ", -- select
+                    S = "󰒅 ", -- select line
+                    i = "󰏫 ", -- insert
+                    R = "󰑖 ", -- replace
+                    c = "󰘳 ", -- command
+                    t = "󰆍 ", -- terminal
                 },
                 mode_colors = {
                     n = "blue",
@@ -217,7 +217,7 @@ return {
                 },
             },
             {
-                provider = "",
+                provider = "█",
                 hl = function(self)
                     local mode_char = self.mode:sub(1, 1)
                     return { fg = self.mode_colors[mode_char] or "purple", bg = "normal_bg" }
@@ -225,16 +225,15 @@ return {
             },
             {
                 provider = function(self)
-                    return " " .. (self.mode_names[self.mode] or self.mode)
+                    return "" .. (self.mode_names[self.mode] or self.mode)
                 end,
                 hl = function(self)
                     local mode_char = self.mode:sub(1, 1)
                     return { fg = "normal_bg", bg = self.mode_colors[mode_char] or "purple", bold = true }
                 end,
             },
-            -- Drop the right half-circle if Keypress is active for seamless blending
             {
-                provider = "",
+                provider = "█",
                 hl = function(self)
                     local mode_char = self.mode:sub(1, 1)
                     local is_keypress = (vim.fn.mode() == "n" and #kb_state.keys > 0)
@@ -248,7 +247,6 @@ return {
         }
 
         -- Macro Recorder
-
         local MacroRecorder = {
             condition = function()
                 return vim.fn.reg_recording() ~= ""
@@ -265,13 +263,15 @@ return {
         -- Git Status
         local Git = {
             condition = conditions.is_git_repo,
+
             init = function(self)
-                self.status = vim.b.gitsigns_status_dict or {}
-                self.added = self.status.added or 0
-                self.removed = self.status.removed or 0
-                self.changed = self.status.changed or 0
-                self.head = self.status.head or ""
+                local status = vim.b.gitsigns_status_dict or {}
+                self.added = status.added or 0
+                self.removed = status.removed or 0
+                self.changed = status.changed or 0
+                self.head = status.head or ""
             end,
+
             on_click = {
                 callback = function()
                     vim.defer_fn(function()
@@ -280,80 +280,44 @@ return {
                 end,
                 name = "sl_git_click",
             },
-            {
-                flexible = 3,
-                -- FULL VIEW: Diffs + Branch Name
-                {
-                    {
-                        condition = function(self)
-                            return self.added > 0
-                        end,
-                        provider = function(self)
-                            return " " .. self.added .. " "
-                        end,
-                        hl = "GitSignsAdd",
-                    },
-                    {
-                        condition = function(self)
-                            return self.changed > 0
-                        end,
-                        provider = function(self)
-                            return " " .. self.changed .. " "
-                        end,
-                        hl = "GitSignsChange",
-                    },
-                    {
-                        condition = function(self)
-                            return self.removed > 0
-                        end,
-                        provider = function(self)
-                            return " " .. self.removed .. " "
-                        end,
-                        hl = "GitSignsDelete",
-                    },
-                    {
-                        provider = function(self)
-                            return " " .. self.head .. " "
-                        end,
-                        hl = { fg = "purple", bold = true },
-                    },
-                },
-                -- MEDIUM VIEW: Diffs ONLY (Branch name disappears first)
-                {
-                    {
-                        condition = function(self)
-                            return self.added > 0
-                        end,
-                        provider = function(self)
-                            return " " .. self.added .. " "
-                        end,
-                        hl = "GitSignsAdd",
-                    },
-                    {
-                        condition = function(self)
-                            return self.changed > 0
-                        end,
-                        provider = function(self)
-                            return " " .. self.changed .. " "
-                        end,
-                        hl = "GitSignsChange",
-                    },
-                    {
-                        condition = function(self)
-                            return self.removed > 0
-                        end,
-                        provider = function(self)
-                            return " " .. self.removed .. " "
-                        end,
-                        hl = "GitSignsDelete",
-                    },
-                },
-                -- MINIMAL VIEW: Icon only (Absolute fallback)
-                {
-                    provider = " ",
-                    hl = { fg = "purple" },
-                },
-            },
+        }
+
+        local GitAdded = {
+            condition = function(self) return self.added > 0 end,
+            provider = function(self) return " " .. self.added .. " " end,
+            hl = "GitSignsAdd",
+        }
+
+        local GitChanged = {
+            condition = function(self) return self.changed > 0 end,
+            provider = function(self) return " " .. self.changed .. " " end,
+            hl = "GitSignsChange",
+        }
+
+        local GitRemoved = {
+            condition = function(self) return self.removed > 0 end,
+            provider = function(self) return " " .. self.removed .. " " end,
+            hl = "GitSignsDelete",
+        }
+
+        local GitBranch = {
+            provider = function(self)
+                return (self.head ~= "" and (" " .. self.head .. " ")) or ""
+            end,
+            hl = { fg = "purple", bold = true },
+        }
+
+        Git[1] = {
+            flexible = 3,
+
+            -- FULL
+            { GitAdded, GitChanged, GitRemoved, GitBranch },
+
+            -- MEDIUM (no branch)
+            { GitAdded, GitChanged, GitRemoved },
+
+            -- MINIMAL
+            { provider = " ", hl = { fg = "purple" } },
         }
 
         -- File Extension / Name
@@ -436,65 +400,60 @@ return {
         -- Diagnostics
         local Diagnostics = {
             condition = conditions.has_diagnostics,
+
             static = {
-                error_icon = " ",
-                warn_icon = " ",
-                info_icon = " ",
-                hint_icon = " ",
+                signs = {
+                    { name = "errors", severity = vim.diagnostic.severity.ERROR, icon = " ", hl = "diag_error" },
+                    { name = "warnings", severity = vim.diagnostic.severity.WARN, icon = " ", hl = "diag_warn" },
+                    { name = "hints", severity = vim.diagnostic.severity.HINT, icon = " ", hl = "diag_hint" },
+                },
             },
+
             init = function(self)
-                self.errors = #vim.diagnostic.get(0, { severity = vim.diagnostic.severity.ERROR })
-                self.warnings = #vim.diagnostic.get(0, { severity = vim.diagnostic.severity.WARN })
-                self.hints = #vim.diagnostic.get(0, { severity = vim.diagnostic.severity.HINT })
-                self.info = #vim.diagnostic.get(0, { severity = vim.diagnostic.severity.INFO })
+                for _, s in ipairs(self.signs) do
+                    self[s.name] = #vim.diagnostic.get(0, { severity = s.severity })
+                end
             end,
+
             update = { "DiagnosticChanged", "BufEnter" },
+
             on_click = {
+                name = "sl_diagnostics_click",
                 callback = function()
                     vim.defer_fn(function()
-                        vim.diagnostic.setqflist({ open = true }) -- Or use Telescope below
+                        vim.diagnostic.setqflist({ open = true })
                     end, 50)
                 end,
-                name = "sl_diagnostics_click",
-            },
-            {
-                provider = function(self)
-                    return self.errors > 0 and (self.error_icon .. self.errors .. " ") or ""
-                end,
-                hl = { fg = "diag_error" },
-            },
-            {
-                provider = function(self)
-                    return self.warnings > 0 and (self.warn_icon .. self.warnings .. " ") or ""
-                end,
-                hl = { fg = "diag_warn" },
-            },
-            {
-                provider = function(self)
-                    return self.hints > 0 and (self.hint_icon .. self.hints .. " ") or ""
-                end,
-                hl = { fg = "diag_hint" },
             },
         }
+
+        -- generate providers dynamically
+        for _, s in ipairs(Diagnostics.static.signs) do
+            table.insert(Diagnostics, {
+                provider = function(self)
+                    local count = self[s.name]
+                    return count > 0 and (s.icon .. count .. " ") or ""
+                end,
+                hl = { fg = s.hl },
+            })
+        end
 
         -- LSP Active
         local LSPActive = {
             condition = conditions.lsp_attached,
             update = { "LspAttach", "LspDetach" },
+
             init = function(self)
                 local clients = vim.lsp.get_clients({ bufnr = 0 })
-                self.client_name = (#clients > 0) and (clients[1].name or "") or ""
+                self.clients = clients
+                self.client_name = clients[1] and clients[1].name or ""
             end,
 
-            -- Restart LSP if it's not obying
             on_click = {
                 callback = function()
                     local bufnr = vim.api.nvim_get_current_buf()
                     local clients = vim.lsp.get_clients({ bufnr = bufnr })
-
-                    if #clients == 0 then
-                        return
-                    end
+                    if #clients == 0 then return end
 
                     for _, client in ipairs(clients) do
                         local config = client.config
@@ -503,8 +462,8 @@ return {
                         client.stop()
 
                         vim.defer_fn(function()
-                            local new_client_id = vim.lsp.start(config)
-                            if new_client_id then
+                            local new_id = vim.lsp.start(config)
+                            if new_id then
                                 vim.notify("Restarted " .. name, vim.log.levels.INFO)
                             end
                         end, 200)
@@ -512,19 +471,27 @@ return {
                 end,
                 name = "sl_lsp_click",
             },
-            flexible = 4, -- Drops out very early
-            {             -- Show Name
+
+            flexible = 2,
+
+            -- Name (auto truncate properly)
+            {
                 provider = function(self)
-                    if self.client_name == "" then
-                        return ""
+                    if self.client_name == "" then return "" end
+
+                    local max = 6
+                    local name = self.client_name
+                    if #name > max then
+                        name = name:sub(1, max) .. "…"
                     end
-                    return " "
-                        .. (#self.client_name > 5 and self.client_name:sub(1, 4) .. "…" or self.client_name)
-                        .. " "
+
+                    return " " .. name .. " "
                 end,
                 hl = { fg = "green", bold = true },
             },
-            { -- Show Icon Only
+
+            -- Icon fallback
+            {
                 provider = " ",
                 hl = { fg = "green" },
             },
@@ -541,7 +508,7 @@ return {
                 name = "sl_ruler_click",
             },
             {
-                provider = "",
+                provider = "█",
                 hl = function()
                     local mode_char = vim.fn.mode():sub(1, 1)
                     return { fg = ViMode.static.mode_colors[mode_char] or "purple", bg = "normal_bg" }
@@ -574,7 +541,7 @@ return {
                 },
             },
             {
-                provider = "",
+                provider = "█",
                 hl = function()
                     local mode_char = vim.fn.mode():sub(1, 1)
                     return { fg = ViMode.static.mode_colors[mode_char] or "purple", bg = "normal_bg" }
@@ -610,7 +577,7 @@ return {
                 },
 
                 {
-                    provider = "",
+                    provider = "█",
                     hl = { fg = "bright_bg", bg = "normal_bg" },
                 },
             },

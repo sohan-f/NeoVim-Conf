@@ -1,4 +1,3 @@
--- Leader
 vim.g.mapleader = " "
 vim.g.maplocalleader = " "
 
@@ -6,12 +5,12 @@ local map = vim.keymap.set
 local api = vim.api
 
 -- Basic
-map("i", "jj", "<Esc>", { desc = "Escape insert" })
+-- map("i", "jk", "<Esc>", { desc = "Escape insert" })
 
 map("n", "<leader>q", "<cmd>q!<CR>", { silent = true, desc = "Quit force" })
-map("n", "<leader>w", vim.cmd.write, { desc = "Save file" })
+map("n", "<leader>w", "<cmd>update<CR>", { silent = true, desc = "Save file" })
 
-map("n", "<leader>so", vim.cmd.source, { desc = "Source file" })
+map("n", "<leader>o", "<cmd>update<CR><cmd>source<CR>", { desc = "Source file" })
 
 -- Wrap toggle
 map("n", "<leader>uw", function()
@@ -118,19 +117,14 @@ map("n", "<leader>mp", function()
     run("npm start", "npm_start")
 end, { desc = "NPM start" })
 
--- Clipboard Toggle
-map("n", "<leader>tc", function()
-    local cb = vim.opt.clipboard:get()
-    local has = vim.tbl_contains(cb, "unnamedplus")
+-- Yank visually selected text to system clipboard
+map("v", "<leader>y", '"+y', { desc = "Yank to system clipboard" })
 
-    if has then
-        vim.opt.clipboard:remove("unnamedplus")
-    else
-        vim.opt.clipboard:append("unnamedplus")
-    end
+-- Paste from system clipboard (normal)
+map("n", "<leader>p", '"+p', { desc = "Paste from system clipboard" })
 
-    vim.notify("Clipboard " .. (has and "OFF" or "ON"))
-end, { desc = "Toggle clipboard" })
+-- Paste over selection without overwriting clipboard
+map("v", "<leader>p", '"_dP', { desc = "Paste over selection (keep clipboard)" })
 
 -- Terminal Escape
 map("t", "<Esc><Esc>", "<C-\\><C-n>", { desc = "Exit terminal mode" })

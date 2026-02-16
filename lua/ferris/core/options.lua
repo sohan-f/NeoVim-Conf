@@ -1,4 +1,6 @@
 -- Core
+
+local vim = vim
 vim.loader.enable()
 
 local opt = vim.opt
@@ -11,23 +13,17 @@ o.laststatus = 3
 opt.number = true
 opt.relativenumber = true
 
-api.nvim_create_autocmd({ "InsertEnter", "InsertLeave" }, {
-    group = api.nvim_create_augroup("DynamicRelativeNumber", { clear = true }),
-    callback = function(ev)
-        opt.relativenumber = (ev.event == "InsertLeave")
-    end,
-})
-
 -- UI
 opt.cmdheight = 0
 opt.showcmd = false
-opt.showmode = false
 opt.termguicolors = true
 opt.background = "dark"
 opt.signcolumn = "yes"
 opt.fillchars = { eob = " " }
-opt.mousefocus = false
-opt.lazyredraw = true
+opt.mousefocus = true
+opt.lazyredraw = false
+opt.winborder = "rounded"
+vim.opt.updatetime = 150
 
 -- Dynamic scrolloff
 local function update_scrolloff()
@@ -47,8 +43,7 @@ opt.tabstop = 4
 opt.softtabstop = 4
 opt.expandtab = true
 opt.autoindent = true
-opt.cindent = false
-opt.smartindent = false
+opt.smartindent = true
 
 -- Search
 opt.hlsearch = false
@@ -61,7 +56,6 @@ opt.smartcase = true
 opt.swapfile = false
 opt.backup = false
 opt.undofile = true
-opt.updatetime = 80
 opt.backspace = { "start", "eol", "indent" }
 
 -- Wrap
@@ -72,8 +66,6 @@ opt.linebreak = false
 opt.shell = "zsh"
 opt.wildmenu = true
 opt.wildmode = "full"
-
-opt.clipboard:append("unnamedplus")
 
 -- Highlight
 local function set_hl()
@@ -89,13 +81,12 @@ set_hl()
 
 -- Diagnostics
 vim.diagnostic.config({
-    virtual_text = false,
+    virtual_text = true,
     underline = true,
     update_in_insert = false,
     severity_sort = true,
     signs = true,
     float = {
-        border = "rounded",
         source = "always",
         focusable = true,
     },
@@ -117,24 +108,8 @@ for type, icon in pairs(signs) do
     })
 end
 
-api.nvim_create_autocmd("CursorHold", {
-    group = api.nvim_create_augroup("DiagnosticHover", { clear = true }),
+vim.api.nvim_create_autocmd("CursorHold", {
     callback = function()
-        local lnum = vim.api.nvim_win_get_cursor(0)[1] - 1
-        if vim.tbl_isempty(vim.diagnostic.get(0, { lnum = lnum })) then
-            return
-        end
-
-        vim.diagnostic.open_float(nil, {
-            scope = "cursor",
-            focus = true,
-            border = "rounded",
-            close_events = {
-                "CursorMoved",
-                "InsertEnter",
-                "BufLeave",
-                "FocusLost",
-            },
-        })
+        vim.diagnostic.open_float(nil, { focusable = false })
     end,
 })
