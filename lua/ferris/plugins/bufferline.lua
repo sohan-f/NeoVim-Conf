@@ -2,7 +2,7 @@ return {
 	"akinsho/bufferline.nvim",
 	version = "*",
 	dependencies = "nvim-tree/nvim-web-devicons",
-	event = "UiEnter",
+	event = { "BufAdd", "BufReadPre" },
 
 	config = function()
 		local bufferline = require("bufferline")
@@ -40,11 +40,5 @@ return {
 				},
 			},
 		})
-
-		-- Standard buffer switching
-		vim.keymap.set("n", "<S-h>", "<cmd>BufferLineCyclePrev<cr>", { desc = "Prev Buffer" })
-		vim.keymap.set("n", "<S-l>", "<cmd>BufferLineCycleNext<cr>", { desc = "Next Buffer" })
-		vim.keymap.set("n", "<leader>bc", "<cmd>bdelete<cr>", { desc = "Close Buffer" })
-		vim.keymap.set("n", "<leader>bo", "<cmd>BufferLineCloseOthers<cr>", { desc = "Close Other Buffers" })
 	end,
 }

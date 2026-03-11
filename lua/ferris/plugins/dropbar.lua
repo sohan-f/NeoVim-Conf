@@ -1,9 +1,8 @@
 return {
 	"Bekaboo/dropbar.nvim",
-	event = "VeryLazy", -- Load when needed, not at startup
+	event = "VeryLazy",
 	dependencies = {
 		"nvim-tree/nvim-web-devicons",
-		"nvim-telescope/telescope-fzf-native.nvim",
 	},
 	keys = {
 		{
@@ -15,7 +14,6 @@ return {
 		},
 	},
 	opts = function()
-		local sources = require("dropbar.sources")
 		return {
 			bar = {
 				exclude_logics = {

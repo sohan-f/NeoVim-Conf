@@ -1,19 +1,25 @@
 return {
 	"folke/todo-comments.nvim",
 	dependencies = { "nvim-lua/plenary.nvim" },
-	cmd = { "TodoTelescope", "TodoTrouble", "TodoQuickFix" },
+	cmd = { "TodoTrouble", "TodoQuickFix" },
 	event = { "BufReadPost", "BufNewFile" },
 	keys = {
-		{ "<leader>td", "<cmd>TodoTelescope<cr>", desc = "Todo (Telescope)" },
+		{
+			"<leader>td",
+			function()
+				Snacks.picker.todo_comments()
+			end,
+			desc = "Todo",
+		},
 	},
 	opts = {
 		keywords = {
-			FIX = { icon = " ", color = "error", alt = { "FIXME", "BUG", "FIXIT", "ISSUE" } },
-			TODO = { icon = " ", color = "info" },
-			HACK = { icon = " ", color = "warning" },
-			WARN = { icon = " ", color = "warning", alt = { "WARNING", "XXX" } },
-			PERF = { icon = " ", alt = { "OPTIM", "PERFORMANCE", "OPTIMIZE" } },
-			NOTE = { icon = " ", color = "hint", alt = { "INFO" } },
+			FIX = { icon = " ", color = "error", alt = { "FIXME", "BUG", "FIXIT", "ISSUE" } },
+			TODO = { icon = " ", color = "info" },
+			HACK = { icon = " ", color = "warning" },
+			WARN = { icon = " ", color = "warning", alt = { "WARNING", "XXX" } },
+			PERF = { icon = " ", alt = { "OPTIM", "PERFORMANCE", "OPTIMIZE" } },
+			NOTE = { icon = " ", color = "hint", alt = { "INFO" } },
 			TEST = { icon = "⏲ ", color = "test", alt = { "TESTING", "PASSED", "FAILED" } },
 		},
 		gui_style = {

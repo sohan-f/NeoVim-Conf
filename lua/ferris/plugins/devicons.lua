@@ -10,14 +10,4 @@ return {
 			default = true,
 		},
 	},
-	{
-		"onsails/lspkind.nvim",
-		opts = {
-			mode = "symbol_text",
-			preset = "codicons",
-			symbol_map = {
-				TypeParameter = "󰬛",
-			},
-		},
-	},
 }

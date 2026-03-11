@@ -3,39 +3,44 @@ return {
 	event = "VimEnter",
 
 	opts = function()
-		local logo = [[
-                 Æ ÆÆÆÆÆÆÆÆÆÆÆ Æ                
-              Æ ÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆ Æ             
-Æ ÆÆÆ       ÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆ       ÆÆÆ Æ
-ÆÆÆÆÆÆ     ÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆ   ÆÆÆÆÆÆÆ
-ÆÆÆÆÆÆÆ ÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆ ÆÆÆÆÆÆÆ
-ÆÆÆÆÆÆÆ ÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆ ÆÆÆÆÆÆÆ
- ÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆ  ÆÆÆÆÆ  ÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆ
-     ÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆ  ÆÆÆÆÆ  ÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆ    
-    ÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆ   
-     ÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆ   
-      ÆÆÆÆÆÆ  ÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆÆ  ÆÆÆÆÆ     
-        ÆÆÆÆÆ                        ÆÆÆÆÆ      
-         ÆÆÆ                          ÆÆÆ       
-]]
-
+		local logo = {
+			[[]],
+			[[                                       ]],
+			[[    ▄   ▄███▄   ████▄     ▄   ▄█ █▀▄▀█ ]],
+			[[     █  █▀   ▀  █   █      █  ██ █ █ █ ]],
+			[[ ██   █ ██▄▄    █   █ █     █ ██ █ ▄ █ ]],
+			[[ █ █  █ █▄   ▄▀ ▀████  █    █ ▐█ █   █ ]],
+			[[ █  █ █ ▀███▀           █  █   ▐    █  ]],
+			[[ █   ██                  █▐        ▀   ]],
+			[[                         ▐             ]],
+			[[                                       ]],
+			[[]],
+			[[]],
+		}
 		local function button(key, label, action, icon)
 			return {
 				key = key,
-				desc = " " .. label .. string.rep(" ", 30), -- adjust 6 to taste
+				desc = " " .. label .. string.rep(" ", 14),
 				action = action,
 				icon = icon .. " ",
 			}
 		end
 
 		local function footer()
-			local stats = require("lazy").stats()
-			local ms = math.floor(stats.startuptime * 100) / 100
+			local ok, lazy = pcall(require, "lazy")
+			if not ok then
+				return {}
+			end
+
+			local stats = lazy.stats()
+
+			local startuptime = stats.startuptime or 0
+
+			local ms = math.floor(startuptime * 100) / 100
 
 			return {
 				"",
-				("  %d/%d plugins loaded"):format(stats.loaded, stats.count),
-				("󰅐  Startup: %.2f ms"):format(ms),
+				("󰅐 Startup: %.2f ms (%d/%d plugins loaded)"):format(ms, stats.loaded, stats.count),
 				"",
 			}
 		end
@@ -45,23 +50,24 @@ return {
 			hide = { statusline = false },
 
 			config = {
-				header = vim.split("\n" .. logo .. "\n", "\n"),
+				header = logo,
 				vertical_center = true,
 				center = {
-					button("f", "Find File", "Telescope find_files", ""),
-					button("r", "Recent Files", "Telescope oldfiles", ""),
+					button("f", "Find File", function()
+						Snacks.picker.files()
+					end, ""),
+					button("r", "Recent Files", function()
+						Snacks.picker.recent()
+					end, ""),
 					button("n", "New File", "ene | startinsert", ""),
 					button("c", "Config", function()
-						require("telescope.builtin").find_files({
-							cwd = vim.fn.stdpath("config"),
-							hidden = true,
-						})
+						Snacks.picker.files({ cwd = vim.fn.stdpath("config"), hidden = true })
 					end, ""),
 					button("l", "Lazy", "Lazy", "󰒲"),
 					button("q", "Quit", "qa", ""),
 				},
 
-				footer = footer(),
+				footer = footer,
 			},
 		}
 	end,

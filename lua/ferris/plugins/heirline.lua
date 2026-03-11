@@ -40,11 +40,7 @@ return {
 			}
 		end
 
-		vim.api.nvim_create_autocmd("ColorScheme", {
-			callback = function()
-				utils.on_colorscheme(setup_colors)
-			end,
-		})
+		utils.on_colorscheme(setup_colors)
 
 		-- KEYPRESS VISUAL FEEDBACK
 
@@ -154,7 +150,7 @@ return {
 			},
 			static = {
 				mode_names = {
-					n = "󰈚 ", -- normal
+					n = " ", -- normal
 					v = "󰈈 ", -- visual
 					V = "󰈈 ", -- visual line
 					["\22"] = "󰈈 ", -- visual block
@@ -180,7 +176,7 @@ return {
 				},
 			},
 			{
-				provider = "",
+				provider = "█",
 				hl = function(self)
 					local mode_char = self.mode:sub(1, 1)
 					return { fg = self.mode_colors[mode_char] or "purple", bg = "normal_bg" }
@@ -499,29 +495,29 @@ return {
 					local mode_char = vim.fn.mode():sub(1, 1)
 					return { fg = "normal_bg", bg = ViMode.static.mode_colors[mode_char] or "purple" }
 				end,
-				{ provider = " " },
+				{ provider = "󰮯 " },
 				{
 					provider = function()
 						return string.format("%d:%-2d", vim.fn.line("."), vim.fn.col("."))
 					end,
 				},
-				{ provider = " │ " },
+				{ provider = "│" },
 				{
 					provider = function()
 						local current = vim.fn.line(".")
 						local total = vim.fn.line("$")
 						if current == 1 then
-							return "Top "
+							return "Top"
 						end
 						if current == total then
-							return "Bot "
+							return "Bot"
 						end
-						return math.floor((current / total) * 100) .. "%% "
+						return math.floor((current / total) * 100) .. "%%"
 					end,
 				},
 			},
 			{
-				provider = "",
+				provider = "█",
 				hl = function()
 					local mode_char = vim.fn.mode():sub(1, 1)
 					return { fg = ViMode.static.mode_colors[mode_char] or "purple", bg = "normal_bg" }

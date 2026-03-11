@@ -16,23 +16,21 @@ vim.opt.rtp:prepend(lazypath)
 
 require("lazy").setup({
 	spec = {
-		-- import/override with your plugins
 		{ import = "ferris.plugins" },
 	},
 
 	defaults = {
-		lazy = false,
-		version = false, -- always use the latest git commit
+		lazy = true,
+		version = false,
 	},
 
 	checker = {
-		enabled = true, -- check for plugin updates periodically
-		notify = false, -- notify on update
-	}, -- automatically check for plugin updates
+		enabled = true,
+		notify = false,
+	},
 
 	performance = {
 		rtp = {
-			-- disable some rtp plugins
 			disabled_plugins = {
 				"gzip",
 				"matchit",

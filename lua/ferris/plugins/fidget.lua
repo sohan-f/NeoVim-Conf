@@ -1,5 +1,6 @@
 return {
 	"j-hui/fidget.nvim",
+	event = "LspAttach",
 	config = function()
 		local comment_fg = vim.api.nvim_get_hl(0, { name = "Comment" }).fg
 		local title_fg = vim.api.nvim_get_hl(0, { name = "Title" }).fg
@@ -37,6 +38,7 @@ return {
 				window = {
 					winblend = 0,
 					normal_hl = "FidgetClean",
+					avoid = { "NvimTree" },
 				},
 				view = {
 					group_separator_hl = "FidgetClean",

@@ -5,213 +5,116 @@ local map = vim.keymap.set
 local api = vim.api
 
 -- Basic
--- map("i", "jk", "<Esc>", { desc = "Escape insert" })
-
+map("i", "jj", "<Esc>", { desc = "Escape insert" })
 map("n", "<leader>q", "<cmd>q!<CR>", { silent = true, desc = "Quit force" })
-map("n", "<leader>w", "<cmd>update<CR>", { silent = true, desc = "Save file" })
+map("n", "<leader>w", "<cmd>w<CR>", { silent = true, desc = "Save file" })
 
-map("n", "<leader>o", "<cmd>update<CR><cmd>source<CR>", { desc = "Source file" })
-
--- Wrap toggle
-map("n", "<leader>uw", function()
-    local wrap = not vim.wo.wrap
-    vim.wo.wrap = wrap
-    vim.wo.linebreak = wrap
-    vim.wo.breakindent = wrap
-end, { desc = "Toggle wrap" })
+-- Clipboard
+local clipboard_enabled = true
+vim.opt.clipboard = "unnamedplus"
+map("n", "<leader>ce", function()
+	clipboard_enabled = not clipboard_enabled
+	if clipboard_enabled then
+		vim.opt.clipboard = "unnamedplus"
+		vim.notify("Clipboard: system (+)")
+	else
+		vim.opt.clipboard = ""
+		vim.notify("Clipboard: Neovim default")
+	end
+end, { desc = "Toggle system clipboard" })
 
 -- Visual
-map("v", "J", ":m '>+1<CR>gv=gv", { silent = true })
-map("v", "K", ":m '<-2<CR>gv=gv", { silent = true })
-map("v", "<", "<gv", { silent = true })
-map("v", ">", ">gv", { silent = true })
-map("x", "p", [["_dP]], { silent = true })
+map("v", "J", ":m '>+1<CR>gv=gv", { silent = true, desc = "Move selection down" })
+map("v", "K", ":m '<-2<CR>gv=gv", { silent = true, desc = "Move selection up" })
+map("v", "<", "<gv", { silent = true, desc = "Indent left" })
+map("v", ">", ">gv", { silent = true, desc = "Indent right" })
+map("x", "p", [["_dP]], { silent = true, desc = "Paste without yanking" })
 
 -- Search
-map("n", "n", "nzzzv")
-map("n", "N", "Nzzzv")
+
+map("n", "n", "nzzzv", { desc = "Next result (centered)" })
+map("n", "N", "Nzzzv", { desc = "Prev result (centered)" })
 
 map("n", "<Esc>", "<cmd>nohlsearch<CR>", { silent = true, desc = "Clear search highlight" })
 
-map("n", "<leader>S",
-    [[:%s/\<<C-r><C-w>\>/<C-r><C-w>/gI<Left><Left><Left>]],
-    { desc = "Rename word under cursor" }
-)
+map("n", "<leader>S", [[:%s/\<<C-r><C-w>\>/<C-r><C-w>/gI<Left><Left><Left>]], { desc = "Rename word under cursor" })
 
--- Diagnostics / LSP
+-- Standard buffer switching
+vim.keymap.set("n", "<S-h>", "<cmd>BufferLineCyclePrev<cr>", { desc = "Prev Buffer" })
+vim.keymap.set("n", "<S-l>", "<cmd>BufferLineCycleNext<cr>", { desc = "Next Buffer" })
+vim.keymap.set("n", "<leader>bc", "<cmd>bdelete<cr>", { desc = "Close Buffer" })
+vim.keymap.set("n", "<leader>bo", "<cmd>BufferLineCloseOthers<cr>", { desc = "Close Other Buffers" })
+
+-- Diagnostics
+
 map("n", "<leader>dg", vim.diagnostic.open_float, { desc = "Line diagnostics" })
 
-map("n", "<leader>uh", function()
-    local enabled = vim.lsp.inlay_hint.is_enabled()
-    vim.lsp.inlay_hint.enable(not enabled)
-end, { desc = "Toggle inlay hints" })
+--Terminal runner
 
--- Terminal Runner
 local terminals = {}
 
 local function focus_buf(buf)
-    for _, win in ipairs(api.nvim_list_wins()) do
-        if api.nvim_win_get_buf(win) == buf then
-            api.nvim_set_current_win(win)
-            return true
-        end
-    end
+	for _, win in ipairs(api.nvim_list_wins()) do
+		if api.nvim_win_get_buf(win) == buf then
+			api.nvim_set_current_win(win)
+			return true
+		end
+	end
 end
 
 local function run(cmd, key)
-    if terminals[key] and api.nvim_buf_is_valid(terminals[key]) then
-        if not focus_buf(terminals[key]) then
-            vim.cmd("sb " .. terminals[key])
-        end
-    else
-        if cmd and cmd ~= "" then
-            vim.cmd("terminal " .. cmd)
-        else
-            vim.cmd("terminal")
-        end
-        terminals[key] = api.nvim_get_current_buf()
-    end
-    vim.cmd.startinsert()
+	if terminals[key] and api.nvim_buf_is_valid(terminals[key]) then
+		if not focus_buf(terminals[key]) then
+			vim.cmd("sb " .. terminals[key])
+		end
+	else
+		vim.cmd(cmd ~= "" and ("terminal " .. cmd) or "terminal")
+		terminals[key] = api.nvim_get_current_buf()
+	end
+	vim.cmd.startinsert()
 end
 
 local function input_run(prompt, base, key, default)
-    vim.ui.input({ prompt = prompt, default = default or "" }, function(args)
-        if not args then
-            return
-        end
-        local full = base .. (args ~= "" and (" " .. args) or "")
-        run(full, key)
-    end)
+	vim.ui.input({ prompt = prompt, default = default or "" }, function(args)
+		if not args then
+			return
+		end
+		run(base .. (args ~= "" and (" " .. args) or ""), key)
+	end)
 end
 
 map("n", "<leader>tb", function()
-    run("", "interactive")
+	run("", "interactive")
 end, { desc = "Interactive terminal" })
-
 map("n", "<leader>tr", function()
-    run("cargo run", "cargo_run")
+	run("cargo run", "cargo_run")
 end, { desc = "Cargo run" })
-
 map("n", "<leader>cb", function()
-    run("cargo build", "cargo_build")
+	run("cargo build", "cargo_build")
 end, { desc = "Cargo build" })
+map("n", "<leader>mi", function()
+	run("intercept-build make -j2", "intercept")
+end, { desc = "Intercept build" })
+map("n", "<leader>mp", function()
+	run("npm start", "npm_start")
+end, { desc = "NPM start" })
 
 map("n", "<leader>ct", function()
-    input_run(
-        "Cargo test args: ",
-        "RUSTFLAGS='-A warnings' cargo test",
-        "cargo_test",
-        "-- --exact --nocapture --quiet"
-    )
+	input_run("Cargo test args: ", "RUSTFLAGS='-A warnings' cargo test", "cargo_test", "-- --exact --nocapture --quiet")
 end, { desc = "Cargo test" })
 
 map("n", "<leader>ma", function()
-    input_run("Make args: ", "make", "make")
+	input_run("Make args: ", "make", "make")
 end, { desc = "Make" })
 
-map("n", "<leader>mi", function()
-    run("intercept-build make -j2", "intercept")
-end, { desc = "Intercept build" })
+-- cli nav
 
-map("n", "<leader>mp", function()
-    run("npm start", "npm_start")
-end, { desc = "NPM start" })
-
--- Yank visually selected text to system clipboard
-map("v", "<leader>y", '"+y', { desc = "Yank to system clipboard" })
-
--- Paste from system clipboard (normal)
-map("n", "<leader>p", '"+p', { desc = "Paste from system clipboard" })
-
--- Paste over selection without overwriting clipboard
-map("v", "<leader>p", '"_dP', { desc = "Paste over selection (keep clipboard)" })
-
--- Terminal Escape
-map("t", "<Esc><Esc>", "<C-\\><C-n>", { desc = "Exit terminal mode" })
-
--- Command-line Wildmenu Navigation
-for k, v in pairs({
-    ["<Up>"]    = 'wildmenumode() ? "\\<Left>"  : "\\<Up>"',
-    ["<Down>"]  = 'wildmenumode() ? "\\<Right>" : "\\<Down>"',
-    ["<Left>"]  = 'wildmenumode() ? "\\<Up>"    : "\\<Left>"',
-    ["<Right>"] = 'wildmenumode() ? "\\<Down>"  : "\\<Right>"',
-}) do
-    map("c", k, v, { expr = true })
+local wildmenu_keys = {
+	["<Up>"] = 'wildmenumode() ? "\\<Left>"  : "\\<Up>"',
+	["<Down>"] = 'wildmenumode() ? "\\<Right>" : "\\<Down>"',
+	["<Left>"] = 'wildmenumode() ? "\\<Up>"    : "\\<Left>"',
+	["<Right>"] = 'wildmenumode() ? "\\<Down>"  : "\\<Right>"',
+}
+for k, v in pairs(wildmenu_keys) do
+	map("c", k, v, { expr = true })
 end
-
-
--- ================== SELF UPDATE ==================
-
-vim.api.nvim_create_user_command("FerrisUpdate", function(opts)
-    local config_dir = vim.fn.stdpath("config")
-
-    if vim.fn.isdirectory(config_dir .. "/.git") == 0 then
-        return vim.notify("Ferris: config is not a git repository", vim.log.levels.ERROR)
-    end
-
-    local function git(cmd)
-        local cwd = vim.fn.getcwd()
-        vim.fn.chdir(config_dir)
-        local out = vim.fn.system(cmd)
-        local err = vim.v.shell_error
-        vim.fn.chdir(cwd)
-        return out, err
-    end
-
-    --  FETCH ONLY (no working tree touch)
-    if opts.args == "fetch" then
-        vim.notify("Ferris: fetching updates…")
-        local out, err = git({ "git", "fetch", "--quiet" })
-        if err ~= 0 then
-            return vim.notify("Ferris: fetch failed\n" .. out, vim.log.levels.ERROR)
-        end
-        return vim.notify("Ferris: fetch complete")
-    end
-
-    --  STATUS (ahead / behind / dirty)
-    if opts.args == "status" then
-        local out = vim.fn.system({
-            "git",
-            "-C",
-            config_dir,
-            "status",
-            "--short",
-            "--branch",
-        })
-        return vim.notify("Ferris status:\n" .. out)
-    end
-
-    --  LOG (recent commits)
-    if opts.args == "log" then
-        local out = vim.fn.system({
-            "git",
-            "-C",
-            config_dir,
-            "log",
-            "--oneline",
-            "--decorate",
-            "-5",
-        })
-        return vim.notify("Ferris log:\n" .. out)
-    end
-
-    --  DEFAULT: SAFE UPDATE
-    vim.notify("Ferris: updating configuration…")
-
-    local out, err = git({ "git", "pull", "--ff-only" })
-    if err ~= 0 then
-        return vim.notify("Ferris: update failed\n" .. out, vim.log.levels.ERROR)
-    end
-
-    --  HOT-RELOAD SUPPORT
-    pcall(function()
-        dofile(config_dir .. "/init.lua")
-    end)
-
-    vim.notify("Ferris: update complete · config reloaded")
-end, {
-    nargs = "?",
-    complete = function()
-        return { "fetch", "status", "log" }
-    end,
-})

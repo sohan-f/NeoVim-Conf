@@ -1,13 +1,9 @@
 -- Core
 
-local vim = vim
-vim.loader.enable()
-
 local opt = vim.opt
 local api = vim.api
-local o = vim.o
 
-o.laststatus = 3
+opt.laststatus = 3
 
 -- Numbers
 opt.number = true
@@ -21,18 +17,16 @@ opt.background = "dark"
 opt.signcolumn = "yes"
 opt.fillchars = { eob = " " }
 opt.mousefocus = true
-opt.lazyredraw = false
 opt.winborder = "rounded"
-vim.opt.updatetime = 150
 
 -- Dynamic scrolloff
 local function update_scrolloff()
-    opt.scrolloff = math.floor(vim.o.lines * 0.2)
+	opt.scrolloff = math.floor(vim.o.lines * 0.2)
 end
 
 api.nvim_create_autocmd({ "VimResized", "UIEnter" }, {
-    group = api.nvim_create_augroup("DynamicScrolloff", { clear = true }),
-    callback = update_scrolloff,
+	group = api.nvim_create_augroup("DynamicScrolloff", { clear = true }),
+	callback = update_scrolloff,
 })
 
 update_scrolloff()
@@ -46,14 +40,14 @@ opt.autoindent = true
 opt.smartindent = true
 
 -- Search
-opt.hlsearch = false
+opt.hlsearch = true
 opt.incsearch = true
 opt.inccommand = "nosplit"
 opt.ignorecase = true
 opt.smartcase = true
 
 -- File
-opt.swapfile = false
+opt.swapfile = true
 opt.backup = false
 opt.undofile = true
 opt.backspace = { "start", "eol", "indent" }
@@ -69,47 +63,42 @@ opt.wildmode = "full"
 
 -- Highlight
 local function set_hl()
-    api.nvim_set_hl(0, "LineNr", { fg = "#ff9e64" })
+	api.nvim_set_hl(0, "LineNr", { fg = "#ff9e64" })
 end
 
 api.nvim_create_autocmd("ColorScheme", {
-    group = api.nvim_create_augroup("CustomHighlights", { clear = true }),
-    callback = set_hl,
+	group = api.nvim_create_augroup("CustomHighlights", { clear = true }),
+	callback = set_hl,
 })
 
 set_hl()
 
 -- Diagnostics
 vim.diagnostic.config({
-    virtual_text = true,
-    underline = true,
-    update_in_insert = false,
-    severity_sort = true,
-    signs = true,
-    float = {
-        source = "always",
-        focusable = true,
-    },
+	virtual_text = true,
+	underline = true,
+	update_in_insert = false,
+	severity_sort = true,
+
+	signs = {
+		text = {
+			[vim.diagnostic.severity.ERROR] = " ",
+			[vim.diagnostic.severity.WARN] = " ",
+			[vim.diagnostic.severity.HINT] = "󰌵 ",
+			[vim.diagnostic.severity.INFO] = " ",
+		},
+	},
+
+	float = {
+		source = "always",
+		focusable = true,
+	},
 })
 
-local signs = {
-    Error = " ",
-    Warn  = " ",
-    Hint  = "󰌵 ",
-    Info  = " ",
-}
-
-for type, icon in pairs(signs) do
-    local hl = "DiagnosticSign" .. type
-    vim.fn.sign_define(hl, {
-        text = icon,
-        texthl = hl,
-        numhl = "",
-    })
-end
-
 vim.api.nvim_create_autocmd("CursorHold", {
-    callback = function()
-        vim.diagnostic.open_float(nil, { focusable = false })
-    end,
+	callback = function()
+		if vim.fn.mode() == "n" then
+			vim.diagnostic.open_float(nil, { focusable = false })
+		end
+	end,
 })
