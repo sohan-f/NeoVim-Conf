@@ -1,7 +1,7 @@
 return {
 	{
 		"mrcjkb/rustaceanvim",
-		version = "^7",
+		version = "^8",
 		ft = { "rust" },
 		dependencies = {
 			"mfussenegger/nvim-dap",

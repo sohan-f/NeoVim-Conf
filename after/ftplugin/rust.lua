@@ -1,12 +1,66 @@
-local bufnr = vim.api.nvim_get_current_buf()
-vim.keymap.set("n", "<leader>a", function()
+local u = require("ferris.utils")
+local b = vim.tbl_extend("force", u.buf, { silent = true })
+
+-- rust-analyzer
+u.map("n", "<leader>a", function()
 	vim.cmd.RustLsp("codeAction")
-end, { silent = true, buffer = bufnr })
-vim.keymap.set(
-	"n",
-	"K", -- Override Neovim's built-in hover keymap with rustaceanvim's hover actions
-	function()
-		vim.cmd.RustLsp({ "hover", "actions" })
-	end,
-	{ silent = true, buffer = bufnr }
-)
+end, vim.tbl_extend("force", b, { desc = "Code actions" }))
+u.map("n", "K", function()
+	vim.cmd.RustLsp({ "hover", "actions" })
+end, vim.tbl_extend("force", b, { desc = "Hover actions" }))
+u.map("n", "<leader>re", function()
+	vim.cmd.RustLsp("explainError")
+end, vim.tbl_extend("force", b, { desc = "Explain error" }))
+u.map("n", "<leader>rd", function()
+	vim.cmd.RustLsp("renderDiagnostic")
+end, vim.tbl_extend("force", b, { desc = "Render diagnostic" }))
+u.map("n", "<leader>rm", function()
+	vim.cmd.RustLsp("expandMacro")
+end, vim.tbl_extend("force", b, { desc = "Expand macro" }))
+u.map("n", "<leader>rp", function()
+	vim.cmd.RustLsp("parentModule")
+end, vim.tbl_extend("force", b, { desc = "Parent module" }))
+u.map("n", "<leader>rj", function()
+	vim.cmd.RustLsp("joinLines")
+end, vim.tbl_extend("force", b, { desc = "Join lines" }))
+u.map("n", "<leader>rR", function()
+	vim.cmd.RustLsp("relatedDiagnostics")
+end, vim.tbl_extend("force", b, { desc = "Related diagnostics" }))
+u.map("n", "<leader>rs", function()
+	vim.cmd.RustLsp("syntaxTree")
+end, vim.tbl_extend("force", b, { desc = "Syntax tree" }))
+u.map("n", "<leader>rg", function()
+	vim.cmd.RustLsp("crateGraph")
+end, vim.tbl_extend("force", b, { desc = "Crate graph" }))
+u.map("n", "<leader>rf", function()
+	vim.cmd.RustLsp({ "flyCheck", "run" })
+end, vim.tbl_extend("force", b, { desc = "Fly check" }))
+
+-- Runnables / Testables / Debuggables
+u.map("n", "<leader>rr", function()
+	vim.cmd.RustLsp("runnables")
+end, vim.tbl_extend("force", b, { desc = "Runnables" }))
+u.map("n", "<leader>rl", function()
+	vim.cmd.RustLsp({ "runnables", bang = true })
+end, vim.tbl_extend("force", b, { desc = "Rerun last" }))
+u.map("n", "<leader>rt", function()
+	vim.cmd.RustLsp("testables")
+end, vim.tbl_extend("force", b, { desc = "Testables" }))
+u.map("n", "<leader>rD", function()
+	vim.cmd.RustLsp("debuggables")
+end, vim.tbl_extend("force", b, { desc = "Debuggables" }))
+
+u.map("n", "<leader>cr", function()
+	u.run("cargo run", "cargo_run")
+end, vim.tbl_extend("force", b, { desc = "Cargo run" }))
+u.map("n", "<leader>cb", function()
+	u.run("cargo build", "cargo_build")
+end, vim.tbl_extend("force", b, { desc = "Cargo build" }))
+u.map("n", "<leader>ct", function()
+	u.input_run(
+		"Cargo test args: ",
+		"RUSTFLAGS='-A warnings' cargo test",
+		"cargo_test",
+		"-- --exact --nocapture --quiet"
+	)
+end, vim.tbl_extend("force", b, { desc = "Cargo test" }))

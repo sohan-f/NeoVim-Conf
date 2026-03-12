@@ -10,7 +10,7 @@ opt.number = true
 opt.relativenumber = true
 
 -- UI
-opt.cmdheight = 0
+opt.cmdheight = 1
 opt.showcmd = false
 opt.termguicolors = true
 opt.background = "dark"

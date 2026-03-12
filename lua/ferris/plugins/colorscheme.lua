@@ -4,7 +4,7 @@ return {
 	priority = 1000,
 	config = function()
 		require("tokyonight").setup({
-			style = "night", -- moon | storm | night | day
+			style = "storm", -- moon | storm | night | day
 			transparent = false,
 			terminal_colors = true,
 		})
